@@ -15,6 +15,7 @@ import axios from "axios";
 import Head from "next/head";
 import Navbar from "@/components/Navbar";
 import PrimaryButton from "@/components/button/PrimaryButton";
+import NolinkButton from "@/components/button/NolinkButton";
 import Footer from "@/components/Footer";
 import Graph from "@/components/Graph";
 import Pie from "@/components/Pie";
@@ -36,6 +37,7 @@ export default () => {
 
 	const [origin, setOrigin] = useState(Date.now());
 	const [timer, setTimer] = useState(0);
+	const [timerIntervalId, setTimerIntervalId] = useState(null);
 	const [meditationMode, setMeditationMode] = useState(true);
 
 	const [attentionData, setAttentionData] = useState([]);
@@ -46,7 +48,7 @@ export default () => {
 		let timeInterval = null;
 		let pauseInterval = null;
 
-		setInterval(() => {
+		let id = setInterval(() => {
 			axios
 				.post("/api/concentration")
 				.then((res) => {
@@ -107,6 +109,7 @@ export default () => {
 					console.error(err);
 				});
 		}, 1000);
+		setTimerIntervalId(id);
 	}, []);
 
 	return (
@@ -193,15 +196,11 @@ export default () => {
 										<p className="text-grey-1 ml-2">{vol}</p>
 									</div> */}
 
-									<PrimaryButton
-										link=""
+									<NolinkButton
 										onClick={(e) => {
-											setConc(80);
-											setVol(100);
-
 											e.preventDefault();
+											setMeditationMode(false);
 										}}
-										target="_self"
 										text={
 											<span>
 												<FontAwesomeIcon
@@ -246,6 +245,8 @@ export default () => {
 										<PrimaryButton
 											link=""
 											onClick={(e) => {
+												clearInterval(timerIntervalId);
+												setMeditationMode(false);
 												e.preventDefault();
 											}}
 											target="_self"
