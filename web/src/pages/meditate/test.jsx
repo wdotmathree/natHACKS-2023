@@ -1,9 +1,3 @@
-// TO DO: implement what is templated in useEffect
-// TO DO: when exit meditation is clicked do what its supposed to
-// TO DO: implement needle in graph
-// TO DO: fix graph to acty show data
-// TO DO: either or fix spedometer
-
 import axios from "axios";
 import Head from "next/head";
 import Navbar from "@/components/Navbar";
@@ -11,11 +5,12 @@ import PrimaryButton from "@/components/button/PrimaryButton";
 import Footer from "@/components/Footer";
 import Graph from "@/components/Graph";
 import Pie from "@/components/Pie";
-import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
-import "react-circular-progressbar/dist/styles.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faShuffle, faSearch, faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import { useState, useEffect, useRef } from "react";
+import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
+import "react-circular-progressbar/dist/styles.css";
+import useSound from "use-sound";
 
 export default () => {
 	const [conc, setConc] = useState(80);
@@ -26,20 +21,13 @@ export default () => {
 	const [meditationMode, setMeditationMode] = useState(true);
 
 	useEffect(() => {
-		//ON MEDITATION MODE INITIATE (when axios get concentration >= "conc"):
-		/*
 		setInterval(() => {
 			setTimer(Math.floor(Date.now() / 1000) - origin);
 		}, 1000);
-		setOrigin(Math.floor(Date.now() / 1000));
-		setMeditationMode(true);
-		*/
 	}, []);
 
 	return (
 		<>
-			<audio src="/sounds/im_broken.wav"></audio>
-
 			<Head>
 				<title>MediNoise</title>
 				<link rel="icon" href="/images/favicon.png" />
@@ -117,7 +105,6 @@ export default () => {
 								/>
 							</div>
 
-							{/*testing*/}
 							{meditationMode && (
 								<div className="bg-dark-1 rounded px-[1.5rem] py-[1.5rem] border border-border w-full mb-[1rem]">
 									<h2 className="text-grey-1 text-xl font-semibold mb-[1rem]">Meditation Timer:</h2>
@@ -149,6 +136,7 @@ export default () => {
 											link="/api/problems/random"
 											onClick={(e) => {
 												e.preventDefault();
+
 											}}
 											target="_self"
 											text={

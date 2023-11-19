@@ -9,6 +9,21 @@ const nextConfig = {
 			},
 		],
 	},
+	webpack: (config, {}) => {
+		config.module.rules.push({
+			test: /\.wav$/,
+			use: {
+				loader: "file-loader",
+				options: {
+					name: "[name].[ext]",
+					outputPath: "public/sounds/",
+					publicPath: "public/sounds/",
+				},
+			},
+		});
+
+		return config;
+	},
 };
 
 module.exports = nextConfig;

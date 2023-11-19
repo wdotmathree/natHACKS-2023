@@ -103,22 +103,6 @@ const Navbar = (props) => {
 						</div>
 					)}
 				</div>
-
-				{/* (<PrimaryButton
-				link="/"
-				target="_self"
-				bgColor="dark-2"
-				text={
-					<span className="flex flex-col justify-center items-center">
-						<FontAwesomeIcon icon={faUserCircle} className="text-grey-1 text-xl w-[1rem]" />
-					</span>
-				}
-				// text={`Logout ${username}`}
-				onClick={() => {
-					localStorage.removeItem("token");
-					setUsername(null);
-				}}
-			/>) */}
 			</div>
 		</nav>
 	);
