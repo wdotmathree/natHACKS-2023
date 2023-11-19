@@ -1,8 +1,15 @@
-// TODO: test what is in useeffect
+// IMPORTANT
 // TODO: when exit meditation is clicked do what its supposed to (get rid of link in primary button)
-// TODO: implement needle in graph (needs the websockets)
 // TODO: fix graph to acty show data (needs the websockets also + fix up old code)
-// TODO: either or fix spedometer (optional, prob will end up js deleting)
+
+// PROBABLY
+// TODO: implement needle in graph (could implement if have time; shouldn't be too hard according to william)
+// TODO: either or fix spedometer (honestly js delete it for now)
+
+// ROBERT"S STUFF (some duplicate(s) of the important section)
+// TODO: implement exit meditation
+// TODO: need to implement volume control (but worst comes to worst if it's too loud i js turn down my system volume)
+// * NOTE TO ROBERT: no websockets; we are making requests to backend with HTTP at set intervals now
 
 import axios from "axios";
 import Head from "next/head";
@@ -21,38 +28,90 @@ import { useState, useEffect, useRef } from "react";
 export default () => {
 	const [conc, setConc] = useState(80);
 	const [vol, setVol] = useState(100);
+
 	const [showSettings, setShowSettings] = useState(false);
 
-	const audioPlayer = useRef();
+	const audioPlayer = useRef(); // kinda useless rn
+	const chartRef = useRef();
 
-	const [origin, setOrigin] = useState(Math.floor(Date.now() / 1000));
-	const [timer, setTimer] = useState(122);
+	const [origin, setOrigin] = useState(Date.now());
+	const [timer, setTimer] = useState(0);
 	const [meditationMode, setMeditationMode] = useState(true);
 
-	useEffect(() => {
-		axios
-			.post("http://localhost:3001/anything")
-			.then((res) => {
-				if (res >= conc) {
-					setInterval(() => {
-						setTimer(Math.floor(Date.now() / 1000) - origin);
-					}, 1000);
+	const [attentionData, setAttentionData] = useState([]);
+	const [alertnessData, setAlertnessData] = useState([]);
+	const [avgData, setAvgData] = useState([]);
 
-					setOrigin(Math.floor(Date.now() / 1000));
-					setMeditationMode(true);
-				}
-			})
-			.catch((err) => {
-				console.error(err);
-			});
+	useEffect(() => {
+		let timeInterval = null;
+		let pauseInterval = null;
+
+		setInterval(() => {
+			axios
+				.post("/api/concentration")
+				.then((res) => {
+					console.log(res.data, conc);
+					if (timeInterval === null && res.data.concentration * 100 < conc) {
+						// timer not running, start it if not concentrated
+						timeInterval = setInterval(() => {
+							if (pauseInterval === null) {
+								setTimer(Math.floor((Date.now() - origin) / 1000));
+							}
+						}, 100);
+
+						setOrigin(Date.now());
+						setMeditationMode(true);
+
+						// audioPlayer.current.muted = false;
+					} else if (res.data.concentration * 100 < conc) {
+						// timer running, if not concentrated, then pause
+						pauseInterval = setInterval(() => {
+							setOrigin(origin + Date.now() - timer);
+						}, 100);
+
+						// audioPlayer.current.muted = true;
+					} else if (timeInterval === null && res.data.concentration * 100 >= conc) {
+						// timer running, resume if concentrated
+						clearInterval(pauseInterval);
+						pauseInterval = null;
+					}
+
+					// * For plotting
+
+					const data = res.data;
+					const attention = data.attention;
+					const alertness = data.alertness;
+
+					setAttentionData((prev) => [...prev, attention]);
+					setAlertnessData((prev) => [...prev, alertness]);
+
+					console.log(attentionData, alertnessData);
+
+					chartRef.current.update();
+					console.log(chartRef.current);
+
+					// data.forEach((value, index) => {
+					// 	Chart.data.datasets[index].data.push(value);
+					// });
+					// if (Chart.data.labels.length > 40) {
+					// 	data.forEach((value, index) => {
+					// 		Chart.data.datasets[index].data.shift();
+					// 	});
+					// 	Chart.data.labels.shift();
+					// }
+					// speedometer.data.datasets[0].needleValue = (500 * longTermAvg) / (Chart.data.datasets[0].data.length * 2);
+					// speedometer.update();
+					// needle(speedometer);
+				})
+				.catch((err) => {
+					console.error(err);
+				});
+		}, 1000);
 	}, []);
 
 	return (
 		<>
-			{/* <Audio src="/sounds/im_broken.wav" audioRef={audioPlayer} /> */}
-
-			{/* {console.log(audioPlayer.current.volume)} */}
-			{/* {(audioPlayer.current.volume = 0.1)} */}
+			<audio src="/sounds/white_noise.wav" autoPlay muted={false} loop ref={audioPlayer}></audio>
 
 			<Head>
 				<title>MediNoise</title>
@@ -67,14 +126,14 @@ export default () => {
 			/>
 
 			<main className="bg-dark-0 w-full">
-				<div className="relative w-4/5 mx-auto mt-[10rem] mb-[6rem] h-[100rem]">
+				<div className="relative w-4/5 mx-auto mt-[10rem] mb-[6rem]">
 					<h1 className="mb-16 text-transparent bg-clip-text bg-gradient-to-br from-emerald-500 to-sky-500 font-bold text-7xl text-center">
 						Meditate
 					</h1>
 
 					<div className="flex flex-row justify-center items-start">
 						<div className="grow px-10">
-							<Graph />
+							<Graph chartRef={chartRef} attentionData={attentionData} alertnessData={alertnessData} />
 						</div>
 
 						<div className="min-w-[25rem] px-10 flex flex-col justify-center items-start sticky top-[6rem]">
@@ -96,11 +155,9 @@ export default () => {
 								<div className={showSettings ? "block" : "hidden"}>
 									<hr className="border-border my-4" />
 
-									<h2 className="text-grey-1 text-xl font-semibold mb-[0.5rem]">
-										Concentration Threshold:
-									</h2>
+									<h2 className="text-grey-1 text-xl font-semibold mb-[0.5rem]">Concentration Threshold:</h2>
 
-									<div className="flex flex-row items-center justify-start">
+									<div className="flex flex-row items-center justify-start mb-6">
 										<input
 											className="w-full"
 											type="range"
@@ -112,7 +169,7 @@ export default () => {
 
 										<p className="text-grey-1 ml-2">{conc}</p>
 									</div>
-
+									{/* 
 									<hr className="border-border my-4" />
 
 									<h2 className="text-grey-1 text-xl font-semibold mb-[0.5rem]">Volume:</h2>
@@ -134,7 +191,7 @@ export default () => {
 										/>
 
 										<p className="text-grey-1 ml-2">{vol}</p>
-									</div>
+									</div> */}
 
 									<PrimaryButton
 										link=""
@@ -159,21 +216,18 @@ export default () => {
 								</div>
 							</div>
 
-							<Audio src="/sounds/im_broken.wav" audioRef={audioPlayer} />
-
-							{/*testing*/}
 							{meditationMode && (
 								<div className="bg-dark-1 rounded px-[1.5rem] py-[1.5rem] border border-border w-full mb-[1rem]">
-									<h2 className="text-grey-1 text-xl font-semibold mb-[1rem]">Meditation Timer:</h2>
+									<h2 className="text-grey-1 text-xl font-semibold mb-[1rem] text-center">
+										Meditation Timer:
+									</h2>
 
 									<div className="flex flex-row items-center justify-center">
 										<div className="flex flex-row items-center justify-center bg-dark-0 aspect-square rounded-full w-[80%]">
 											<CircularProgressbar
 												value={(timer % 300) / 3}
 												text={
-													(timer / 60 < 10
-														? "0" + Math.floor(timer / 60)
-														: Math.floor(timer / 60)) +
+													(timer / 60 < 10 ? "0" + Math.floor(timer / 60) : Math.floor(timer / 60)) +
 													":" +
 													(timer % 60 < 10 ? "0" + (timer % 60) : timer % 60)
 												}
@@ -190,7 +244,7 @@ export default () => {
 
 									<div className="flex flex-row items-center justify-center">
 										<PrimaryButton
-											link="/api/problems/random"
+											link=""
 											onClick={(e) => {
 												e.preventDefault();
 											}}

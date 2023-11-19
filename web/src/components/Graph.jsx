@@ -1,7 +1,10 @@
 "use client";
+
 import { Line, Doughnut } from "react-chartjs-2";
+import axios from "axios";
 import Chart from "chart.js/auto";
 import { CategoryScale } from "chart.js";
+import { useEffect, useRef } from "react";
 
 Chart.register(CategoryScale);
 
@@ -28,59 +31,62 @@ Chart.register(CategoryScale);
 //     needle(speedometer);
 // });
 
-export default function Graph() {
+export default function Graph(props) {
+	const { chartRef, alertnessData, attentionData, avgData } = props;
+
 	return (
 		<Line
+			ref={chartRef}
 			width={1000}
-			height={1000}
-            plugins={
-                [{
-                    afterDraw: (chart) => {
-                        var needleValue = chart.config.data.datasets[0].needleValue;
-                        var dataTotal = chart.config.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                        var angle = Math.PI + (1 / dataTotal) * needleValue * Math.PI;
-                        var ctx = chart.ctx;
-                        var cw = chart.canvas.offsetWidth;
-                        var ch = chart.canvas.offsetHeight;
-                        var cx = cw / 2;
-                        var cy = ch - 15;
-                    
-                        ctx.translate(cx, cy);
-                        ctx.rotate(angle);
-                        ctx.beginPath();
-                        ctx.moveTo(0, -3);
-                        ctx.lineTo(ch - 10, 0);
-                        ctx.lineTo(0, 3);
-                        ctx.fillStyle = "rgb(0, 0, 0)";
-                        ctx.fill();
-                        ctx.rotate(-angle);
-                        ctx.translate(-cx, -cy);
-                        ctx.beginPath();
-                        ctx.arc(cx, cy, 5, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                }]
-            }
+			height={500}
+			plugins={[
+				{
+					afterDraw: (chart) => {
+						var needleValue = chart.config.data.datasets[0].needleValue;
+						var dataTotal = chart.config.data.datasets[0].data.reduce((a, b) => a + b, 0);
+						var angle = Math.PI + (1 / dataTotal) * needleValue * Math.PI;
+						var ctx = chart.ctx;
+						var cw = chart.canvas.offsetWidth;
+						var ch = chart.canvas.offsetHeight;
+						var cx = cw / 2;
+						var cy = ch - 15;
+
+						ctx.translate(cx, cy);
+						ctx.rotate(angle);
+						ctx.beginPath();
+						ctx.moveTo(0, -3);
+						ctx.lineTo(ch - 10, 0);
+						ctx.lineTo(0, 3);
+						ctx.fillStyle = "rgb(0, 0, 0)";
+						ctx.fill();
+						ctx.rotate(-angle);
+						ctx.translate(-cx, -cy);
+						ctx.beginPath();
+						ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+						ctx.fill();
+					},
+				},
+			]}
 			data={{
 				labels: [0],
 				datasets: [
 					{
 						label: "Attention",
-						data: [0],
+						data: attentionData,
 						fill: false,
 						borderColor: "rgba(89, 239, 254, 0.4)",
 						backgroundColor: "transparent",
 					},
 					{
 						label: "Alertness",
-						data: [0],
+						data: alertnessData,
 						borderColor: "rgba(255, 0, 211, 0.4)",
 						fill: false,
 						backgroundColor: "transparent",
 					},
 					{
 						label: "Long-Term Average",
-						data: [0],
+						data: avgData,
 						borderColor: "rgba(0, 255, 65, 0.4)",
 						fill: false,
 						backgroundColor: "transparent",
@@ -105,21 +111,15 @@ export default function Graph() {
 					duration: 1000,
 				},
 				scales: {
-					xAxes: [
-						{
-							display: false,
-						},
-					],
-					yAxes: [
-						{
-							ticks: {
-								fontColor: "rgba(255, 255, 255, 0.87)",
-								suggestedMin: 0,
-								suggestedMax: 1,
-								stepSize: 0.1,
-							},
-						},
-					],
+					x: {
+						display: false,
+					},
+					y: {
+						fontColor: "rgba(255, 255, 255, 0.87)",
+						suggestedMin: 0,
+						suggestedMax: 1,
+						stepSize: 0.1,
+					},
 				},
 				tooltips: {
 					enabled: false,

@@ -2,12 +2,13 @@ from pythonosc.dispatcher import Dispatcher
 from pythonosc.osc_server import ThreadingOSCUDPServer
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
+import numpy as np
 import time
 
 queues = {}
 theta = 750.0
 beta = 750.0
-alpha = 750.0
+alpha = 5000.0
 
 class Server(BaseHTTPRequestHandler):
 	def do_GET(self):
@@ -45,7 +46,15 @@ class Server(BaseHTTPRequestHandler):
 	
 	def do_POST(self):
 		self.send_response(200)
-		self.wfile.write(str(theta + beta / alpha / 2))
+		self.send_header("Content-Type", "text/json")
+		self.end_headers()
+		self.wfile.write(str(
+			{
+				"attention": theta / alpha,
+				"alertness": beta / alpha,
+				"concentration": (theta + beta) / alpha / 2,
+			}).replace("'", '"').encode())
+		self.wfile.flush()
 
 buf = []
 prev = 750.0
