@@ -37,7 +37,7 @@ const Navbar = (props) => {
 						href="/"
 						className="opacity-100 transition duration-200 hover:opacity-70"
 					>
-						<Image src="/images/pzoj.png" width="35" height="35" />
+						<Image src="/images/pzoj.png" width="45" height="45" />
 					</Link>
 				</div>
 
