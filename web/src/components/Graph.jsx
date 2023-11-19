@@ -32,7 +32,7 @@ Chart.register(CategoryScale);
 // });
 
 export default function Graph(props) {
-	const { chartRef, alertnessData, attentionData, avgData } = props;
+	const { chartRef, alertnessData, attentionData, avgData, labelData } = props;
 
 	return (
 		<Line
@@ -68,7 +68,7 @@ export default function Graph(props) {
 				},
 			]}
 			data={{
-				labels: [0],
+				labels: labelData,
 				datasets: [
 					{
 						label: "Attention",

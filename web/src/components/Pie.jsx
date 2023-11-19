@@ -4,23 +4,23 @@ import { CategoryScale } from "chart.js";
 
 Chart.register(CategoryScale);
 
-export default function Pie() {
+export default function Pie(props) {
+	const { attentionData } = props;
 	return (
-		// <Doughnut
-		//     options={{
-		//         circumference: Math.PI,
-		//         rotation: Math.PI,
-		//         responsive: false,
-		//     }}
-		//     data={{
-		//         datasets: [
-		//             {
-		//                 borderColor: "#00ff41",
-		//                 data: [500, 500, 500],
-		//                 needleValue: 580
-		//             }
-		//         ]
-		//     }}/>
-		<div></div>
+		<Doughnut
+			options={{
+				circumference: Math.PI,
+				rotation: Math.PI,
+				responsive: false,
+			}}
+			data={{
+				datasets: [
+					{
+						borderColor: "#00ff41",
+						data: attentionData,
+						needleValue: 580
+					}
+				]
+		}}/>
 	);
 }

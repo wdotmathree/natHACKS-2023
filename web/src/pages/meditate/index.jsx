@@ -1,7 +1,3 @@
-// IMPORTANT
-// TODO: when exit meditation is clicked do what its supposed to (get rid of link in primary button)
-// TODO: fix graph to acty show data (needs the websockets also + fix up old code)
-
 // PROBABLY
 // TODO: implement needle in graph (could implement if have time; shouldn't be too hard according to william)
 // TODO: either or fix spedometer (honestly js delete it for now)
@@ -42,13 +38,15 @@ export default () => {
 
 	const [attentionData, setAttentionData] = useState([]);
 	const [alertnessData, setAlertnessData] = useState([]);
+	const [sum, setSum] = useState(0);
 	const [avgData, setAvgData] = useState([]);
+
+	const [labelData, setLabelData] = useState([]);
 
 	useEffect(() => {
 		let timeInterval = null;
-		let pauseInterval = null;
 
-		let id = setInterval(() => {
+		setInterval(() => {
 			axios
 				.post("/api/concentration")
 				.then((res) => {
@@ -56,26 +54,14 @@ export default () => {
 					if (timeInterval === null && res.data.concentration * 100 < conc) {
 						// timer not running, start it if not concentrated
 						timeInterval = setInterval(() => {
-							if (pauseInterval === null) {
-								setTimer(Math.floor((Date.now() - origin) / 1000));
-							}
+							setTimer(Math.floor((Date.now() - origin) / 1000));
 						}, 100);
 
+						setTimerIntervalId(timeInterval);
 						setOrigin(Date.now());
 						setMeditationMode(true);
 
-						// audioPlayer.current.muted = false;
-					} else if (res.data.concentration * 100 < conc) {
-						// timer running, if not concentrated, then pause
-						pauseInterval = setInterval(() => {
-							setOrigin(origin + Date.now() - timer);
-						}, 100);
-
-						// audioPlayer.current.muted = true;
-					} else if (timeInterval === null && res.data.concentration * 100 >= conc) {
-						// timer running, resume if concentrated
-						clearInterval(pauseInterval);
-						pauseInterval = null;
+						audioPlayer.current.muted = false;
 					}
 
 					// * For plotting
@@ -86,8 +72,9 @@ export default () => {
 
 					setAttentionData((prev) => [...prev, attention]);
 					setAlertnessData((prev) => [...prev, alertness]);
-
-					console.log(attentionData, alertnessData);
+					setSum((prev) => prev + attention + alertness);
+					setAvgData((prev) => [...prev, sum / (prev.length + 1) / 2]);
+					setLabelData((prev) => [...prev, 0]);
 
 					chartRef.current.update();
 					console.log(chartRef.current);
@@ -109,7 +96,6 @@ export default () => {
 					console.error(err);
 				});
 		}, 1000);
-		setTimerIntervalId(id);
 	}, []);
 
 	return (
@@ -136,7 +122,13 @@ export default () => {
 
 					<div className="flex flex-row justify-center items-start">
 						<div className="grow px-10">
-							<Graph chartRef={chartRef} attentionData={attentionData} alertnessData={alertnessData} />
+							<Graph
+								chartRef={chartRef}
+								attentionData={attentionData}
+								alertnessData={alertnessData}
+								avgData={avgData}
+								labelData={labelData}
+							/>
 						</div>
 
 						<div className="min-w-[25rem] px-10 flex flex-col justify-center items-start sticky top-[6rem]">
@@ -199,7 +191,7 @@ export default () => {
 									<NolinkButton
 										onClick={(e) => {
 											e.preventDefault();
-											setMeditationMode(false);
+											clearInterval(timerIntervalId);
 										}}
 										text={
 											<span>
@@ -246,7 +238,6 @@ export default () => {
 											link=""
 											onClick={(e) => {
 												clearInterval(timerIntervalId);
-												setMeditationMode(false);
 												e.preventDefault();
 											}}
 											target="_self"
@@ -264,6 +255,7 @@ export default () => {
 									</div>
 								</div>
 							)}
+							{/* <Pie attentionData={attentionData}/> */}
 						</div>
 					</div>
 				</div>
