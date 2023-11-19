@@ -2,7 +2,6 @@ from pythonosc.dispatcher import Dispatcher
 from pythonosc.osc_server import ThreadingOSCUDPServer
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
-import numpy as np
 import time
 
 queues = {}

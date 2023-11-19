@@ -1,8 +1,8 @@
-// TO DO: implement what is templated in useEffect
-// TO DO: when exit meditation is clicked do what its supposed to
-// TO DO: implement needle in graph
-// TO DO: fix graph to acty show data
-// TO DO: either or fix spedometer
+// TODO: test what is in useeffect
+// TODO: when exit meditation is clicked do what its supposed to (get rid of link in primary button)
+// TODO: implement needle in graph (needs the websockets)
+// TODO: fix graph to acty show data (needs the websockets also + fix up old code)
+// TODO: either or fix spedometer (optional, prob will end up js deleting)
 
 import axios from "axios";
 import Head from "next/head";
@@ -11,34 +11,48 @@ import PrimaryButton from "@/components/button/PrimaryButton";
 import Footer from "@/components/Footer";
 import Graph from "@/components/Graph";
 import Pie from "@/components/Pie";
+import Audio from "@/components/Audio";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faShuffle, faSearch, faArrowRight } from "@fortawesome/free-solid-svg-icons";
+import { faShuffle, faSearch, faCaretDown, faCaretUp } from "@fortawesome/free-solid-svg-icons";
 import { useState, useEffect, useRef } from "react";
 
 export default () => {
 	const [conc, setConc] = useState(80);
 	const [vol, setVol] = useState(100);
+	const [showSettings, setShowSettings] = useState(false);
+
+	const audioPlayer = useRef();
 
 	const [origin, setOrigin] = useState(Math.floor(Date.now() / 1000));
 	const [timer, setTimer] = useState(122);
 	const [meditationMode, setMeditationMode] = useState(true);
 
 	useEffect(() => {
-		//ON MEDITATION MODE INITIATE (when axios get concentration >= "conc"):
-		/*
-		setInterval(() => {
-			setTimer(Math.floor(Date.now() / 1000) - origin);
-		}, 1000);
-		setOrigin(Math.floor(Date.now() / 1000));
-		setMeditationMode(true);
-		*/
+		axios
+			.post("http://localhost:3001/anything")
+			.then((res) => {
+				if (res >= conc) {
+					setInterval(() => {
+						setTimer(Math.floor(Date.now() / 1000) - origin);
+					}, 1000);
+
+					setOrigin(Math.floor(Date.now() / 1000));
+					setMeditationMode(true);
+				}
+			})
+			.catch((err) => {
+				console.error(err);
+			});
 	}, []);
 
 	return (
 		<>
-			<audio src="/sounds/im_broken.wav"></audio>
+			{/* <Audio src="/sounds/im_broken.wav" audioRef={audioPlayer} /> */}
+
+			{/* {console.log(audioPlayer.current.volume)} */}
+			{/* {(audioPlayer.current.volume = 0.1)} */}
 
 			<Head>
 				<title>MediNoise</title>
@@ -64,58 +78,88 @@ export default () => {
 						</div>
 
 						<div className="min-w-[25rem] px-10 flex flex-col justify-center items-start sticky top-[6rem]">
-							<div className="bg-dark-1 rounded px-[1.5rem] py-[1.5rem] border border-border w-full mb-[1rem]">
-								<h2 className="text-grey-1 text-xl font-semibold mb-[1rem]">
-									Concentration Threshold:
-								</h2>
-
-								<div className="flex flex-row items-center justify-start">
-									<input
-										className="w-full"
-										type="range"
-										min={1}
-										max={100}
-										value={conc}
-										onChange={(e) => setConc(e.currentTarget.value)}
-									/>
-
-									<p className="text-grey-1 ml-2">{conc}</p>
-								</div>
-
-								<hr className="border-border my-4" />
-
-								<div className="flex flex-row items-center justify-start">
-									<input
-										className="w-full"
-										type="range"
-										min={1}
-										max={100}
-										value={conc}
-										onChange={(e) => setConc(e.currentTarget.value)}
-									/>
-
-									<p className="text-grey-1 ml-2">{conc}</p>
-								</div>
-
-								<PrimaryButton
-									link="/api/problems/random"
-									onClick={(e) => {
-										e.preventDefault();
-										window.open("/api/problems/random");
+							<div className="bg-dark-1 rounded px-[1.5rem] pt-[0.8rem] border border-border w-full mb-[1rem] pb-[1rem]">
+								<div
+									className="text-grey-1 flex flex-row justify-between items-center cursor-pointer"
+									onClick={() => {
+										setShowSettings((prev) => !prev);
 									}}
-									target="_self"
-									text={
-										<span>
-											<FontAwesomeIcon
-												icon={faShuffle}
-												className="text-xl inline-block w-[1.2rem] mt-[-0.23rem] mr-0.5"
-											/>{" "}
-											Reset to Default
-										</span>
-									}
-									bgColor="dark-1"
-								/>
+								>
+									<h2 className="text-xl">Settings</h2>
+
+									<FontAwesomeIcon
+										icon={showSettings ? faCaretUp : faCaretDown}
+										className="text-xl inline-block w-[1rem] mt-[-0.25rem]"
+									/>
+								</div>
+
+								<div className={showSettings ? "block" : "hidden"}>
+									<hr className="border-border my-4" />
+
+									<h2 className="text-grey-1 text-xl font-semibold mb-[0.5rem]">
+										Concentration Threshold:
+									</h2>
+
+									<div className="flex flex-row items-center justify-start">
+										<input
+											className="w-full"
+											type="range"
+											min={1}
+											max={100}
+											value={conc}
+											onChange={(e) => setConc(e.currentTarget.value)}
+										/>
+
+										<p className="text-grey-1 ml-2">{conc}</p>
+									</div>
+
+									<hr className="border-border my-4" />
+
+									<h2 className="text-grey-1 text-xl font-semibold mb-[0.5rem]">Volume:</h2>
+
+									<div className="flex flex-row items-center justify-start mb-6">
+										<input
+											className="w-full"
+											type="range"
+											min={1}
+											max={100}
+											value={vol}
+											onChange={(e) => {
+												setVol(e.currentTarget.value);
+
+												console.log(audioPlayer.current.volume);
+												// audioPlayer.current.volume = e.currentTarget.value / 100;
+												// audioPlayer.current.volume = 1;
+											}}
+										/>
+
+										<p className="text-grey-1 ml-2">{vol}</p>
+									</div>
+
+									<PrimaryButton
+										link=""
+										onClick={(e) => {
+											setConc(80);
+											setVol(100);
+
+											e.preventDefault();
+										}}
+										target="_self"
+										text={
+											<span>
+												<FontAwesomeIcon
+													icon={faShuffle}
+													className="text-xl inline-block w-[1.2rem] mt-[-0.23rem] mr-0.5"
+												/>{" "}
+												Reset to Default
+											</span>
+										}
+										bgColor="dark-1"
+									/>
+								</div>
 							</div>
+
+							<Audio src="/sounds/im_broken.wav" audioRef={audioPlayer} />
 
 							{/*testing*/}
 							{meditationMode && (
